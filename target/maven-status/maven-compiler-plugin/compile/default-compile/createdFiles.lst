@@ -1,3 +1,8 @@
+com\rey\courier\Main.class
 com\rey\courier\domain\courier\Courier.class
-com\rey\courier\domain\user\User.class
 com\rey\courier\domain\delivery\DeliveryPackage.class
+com\rey\courier\api\PackageResponse.class
+com\rey\courier\application\PackageService.class
+com\rey\courier\domain\location\Address.class
+com\rey\courier\api\PackageRequest.class
+com\rey\courier\domain\user\User.class
