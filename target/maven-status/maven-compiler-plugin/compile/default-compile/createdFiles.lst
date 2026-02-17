@@ -1,0 +1,3 @@
+com\rey\courier\domain\courier\Courier.class
+com\rey\courier\domain\user\User.class
+com\rey\courier\domain\delivery\DeliveryPackage.class
