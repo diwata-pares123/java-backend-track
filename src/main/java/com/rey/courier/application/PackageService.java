@@ -1,16 +1,15 @@
 package com.rey.courier.application;
 
+import org.springframework.stereotype.Service;
 import com.rey.courier.api.PackageRequest;
 import com.rey.courier.api.PackageResponse;
 import com.rey.courier.domain.delivery.DeliveryPackage;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Service
 public class PackageService {
 
-    /**
-     * Updated: Now accepts a DTO and returns a DTO.
-     */
     public PackageResponse registerNewPackage(PackageRequest request) {
         // 1. Map Request DTO -> Domain Entity
         UUID newId = UUID.randomUUID();
@@ -21,9 +20,7 @@ public class PackageService {
             LocalDateTime.now()
         );
 
-        // 2. In a real app, we would save domainEntity to a DB here.
-
-        // 3. Map Domain Entity -> Response DTO (The "Shield")
+        // 2. Map Domain Entity -> Response DTO
         return new PackageResponse(
             domainEntity.getId(),
             domainEntity.getStatus(),
@@ -32,7 +29,6 @@ public class PackageService {
     }
 
     public PackageResponse updatePackageStatus(UUID packageId, String newStatus) {
-        // Just a skeleton for now
         return new PackageResponse(packageId, newStatus, "TRK-EXISTING");
     }
 }
