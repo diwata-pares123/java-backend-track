@@ -1,18 +1,16 @@
-package com.example.courier.controller;
+package com.rey.courier.api;
 
-import com.example.courier.dto.PackageRequest;
-import com.example.courier.dto.PackageResponse;
-import com.example.courier.service.PackageService;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.rey.courier.application.PackageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid; // ✅ M1: The essential validation import
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
-// ✅ M4: Base path updated to /api/v1/packages.
-//    All endpoints in this controller inherit this prefix automatically.
-//    Old path (/api/packages) is now GONE — this is a fresh V1 contract.
 @RequestMapping("/api/v1/packages")
+@Tag(name = "Package Controller", description = "Operations related to courier package lifecycle management")
 public class PackageController {
 
     private final PackageService packageService;
@@ -21,46 +19,30 @@ public class PackageController {
         this.packageService = packageService;
     }
 
-    // POST /api/v1/packages
+    @GetMapping("/health")
+    @Operation(summary = "Health Check", description = "Confirms the V1 API is reachable and running")
+    public com.rey.courier.api.ApiResponse<String> healthCheck() {
+        return new com.rey.courier.api.ApiResponse<>(true, "Courier API V1 is running", null);
+    }
+
     @PostMapping
-    public ResponseEntity<PackageResponse> createPackage(@RequestBody PackageRequest request) {
-        PackageResponse response = packageService.createPackage(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @Operation(summary = "Register a new package", description = "Accepts package details and generates a tracking number")
+    @ApiResponse(responseCode = "201", description = "Package successfully created and tracked")
+    // 🔥 THE WALL IS HERE: Notice the @Valid annotation right before @RequestBody
+    public com.rey.courier.api.ApiResponse<PackageResponse> createPackage(@Valid @RequestBody PackageRequest request) {
+        PackageResponse responsePayload = packageService.registerNewPackage(request);
+        return new com.rey.courier.api.ApiResponse<>(true, "Package created successfully", responsePayload);
     }
 
-    // GET /api/v1/packages/{id}
-    @GetMapping("/{id}")
-    public ResponseEntity<PackageResponse> getPackageById(@PathVariable Long id) {
-        PackageResponse response = packageService.getPackageById(id);
-        return ResponseEntity.ok(response);
-    }
-
-    // GET /api/v1/packages?page=0&size=10
-    // ✅ M3 safeguard: size is capped at 100 in the service/controller layer.
-    //    Never trust the frontend to send a sane value.
     @GetMapping
-    public ResponseEntity<Page<PackageResponse>> getAllPackages(
+    @Operation(summary = "List all packages", description = "Returns a paginated list of packages.")
+    public com.rey.courier.api.ApiResponse<List<PackageResponse>> getPackages(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
-        int limitedSize = Math.min(size, 100); // Guard against "Jumbo Requests"
-        Page<PackageResponse> packages = packageService.getAllPackages(page, limitedSize);
-        return ResponseEntity.ok(packages);
-    }
-
-    // PUT /api/v1/packages/{id}
-    @PutMapping("/{id}")
-    public ResponseEntity<PackageResponse> updatePackage(
-            @PathVariable Long id,
-            @RequestBody PackageRequest request) {
-        PackageResponse response = packageService.updatePackage(id, request);
-        return ResponseEntity.ok(response);
-    }
-
-    // DELETE /api/v1/packages/{id}
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePackage(@PathVariable Long id) {
-        packageService.deletePackage(id);
-        return ResponseEntity.noContent().build();
+        
+        int limitedSize = Math.min(size, 100);
+        List<PackageResponse> packages = packageService.getAllPackages(page, limitedSize);
+        
+        return new com.rey.courier.api.ApiResponse<>(true, "Packages retrieved successfully", packages);
     }
 }
