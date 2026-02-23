@@ -1,13 +1,12 @@
 package com.rey.courier.api.exception;
 
-import jakarta.servlet.http.HttpServletRequest; // 🔥 New Import
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime; // 🔥 New Import
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,10 +14,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    // 1. Changed return type to ApiErrorResponse
-    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(
-            MethodArgumentNotValidException ex, 
-            HttpServletRequest request) { // 2. Added request to get the path dynamically
+    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         
         Map<String, String> errors = new HashMap<>();
         
@@ -26,16 +22,14 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
         
-        // 3. Populate your new standardized enterprise contract!
         ApiErrorResponse errorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(), // Extracts the integer 400
+                HttpStatus.BAD_REQUEST.value(),
                 "Validation Failed",
-                errors, // Passing the Map into the 'Object message' field
-                request.getRequestURI() // Dynamically gets the URL (e.g., "/api/v1/packages")
+                errors,
+                "Check your request parameters"
         );
         
-        // 4. Return the new standard object
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-}
+} // <--- Make sure this last brace is here!

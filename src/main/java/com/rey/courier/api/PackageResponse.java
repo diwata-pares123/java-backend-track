@@ -3,17 +3,18 @@ package com.rey.courier.api;
 import java.util.UUID;
 
 public class PackageResponse {
-    private final UUID packageId;
-    private final String status;
-    private final String trackingNumber;
+    private UUID id;
+    private String destinationAddress;
+    private Double weight;
 
-    public PackageResponse(UUID packageId, String status, String trackingNumber) {
-        this.packageId = packageId;
-        this.status = status;
-        this.trackingNumber = trackingNumber;
+    public PackageResponse(UUID id, String destinationAddress, Double weight) {
+        this.id = id;
+        this.destinationAddress = destinationAddress;
+        this.weight = weight;
     }
 
-    public UUID getPackageId() { return packageId; }
-    public String getStatus() { return status; }
-    public String getTrackingNumber() { return trackingNumber; }
+    // Getters
+    public UUID getId() { return id; }
+    public String getDestinationAddress() { return destinationAddress; }
+    public Double getWeight() { return weight; }
 }
