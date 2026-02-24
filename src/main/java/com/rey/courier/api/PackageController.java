@@ -1,6 +1,9 @@
 package com.rey.courier.api;
 
 import com.rey.courier.application.PackageService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -20,8 +23,7 @@ public class PackageController {
     }
 
     @PostMapping
-    public ApiResponse<PackageResponse> createPackage(@RequestBody PackageRequest request) {
-        PackageResponse response = packageService.registerNewPackage(request);
+public ApiResponse<PackageResponse> createPackage(@Valid @RequestBody PackageRequest request) {        PackageResponse response = packageService.registerNewPackage(request);
         return new ApiResponse<>(true, "Package created successfully", response);
     }
 
