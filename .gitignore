@@ -1,0 +1,15 @@
+# Maven junk (This stops the "Duplicate Class" errors)
+/target/
+/bin/
+
+# IDE junk
+.idea/
+.settings/
+.project
+.classpath
+*.iml
+*.iws
+
+# System junk
+.DS_Store
+Thumbs.db
