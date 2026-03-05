@@ -10,6 +10,6 @@ public class Main {
         // and starts the web server, database connection, and DI container.
         SpringApplication.run(Main.class, args);
         
-        System.out.println("--- Courier Microservice is Live ---");
+        System.out.println("--- Identity Microservice is Live ---");
     }
 }

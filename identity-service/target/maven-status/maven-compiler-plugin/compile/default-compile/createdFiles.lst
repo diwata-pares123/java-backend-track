@@ -9,6 +9,5 @@ com\rey\courier\api\validation\ValidTrackingPrefix.class
 com\rey\courier\api\exception\GlobalExceptionHandler.class
 com\rey\courier\application\PackageService.class
 com\rey\courier\api\PackageRequest.class
-com\rey\courier\api\PackageController.class
 com\rey\courier\api\ApiResponse.class
 com\rey\courier\domain\repository\PackageRepository.class

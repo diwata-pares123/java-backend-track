@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/packages")
+@RequestMapping("/api/v1/packages") // This matches Postman exactly
 public class PackageController {
 
     private final PackageService packageService;
@@ -14,23 +14,15 @@ public class PackageController {
         this.packageService = packageService;
     }
 
-    @GetMapping("/health")
-    public ApiResponse<String> healthCheck() {
-        return new ApiResponse<>(true, "Courier API is running", "OK");
-    }
-
-    @PostMapping
-    public ApiResponse<PackageResponse> createPackage(@RequestBody PackageRequest request) {
-        PackageResponse response = packageService.registerNewPackage(request);
-        return new ApiResponse<>(true, "Package created successfully", response);
+    @PostMapping // This makes it handle POST requests
+    public PackageResponse createPackage(@RequestBody PackageRequest request) {
+        return packageService.registerNewPackage(request);
     }
 
     @GetMapping
-    public ApiResponse<List<PackageResponse>> getPackages(
+    public List<PackageResponse> getAllPackages(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
-        List<PackageResponse> packages = packageService.getAllPackages(page, size);
-        return new ApiResponse<>(true, "Packages retrieved successfully", packages);
+        return packageService.getAllPackages(page, size);
     }
 }
