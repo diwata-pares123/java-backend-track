@@ -16,6 +16,16 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
+    // --- NEW: The POST mapping to create a new user! ---
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        User savedUser = userRepository.save(user);
+        System.out.println("[Identity Service] Successfully created new user with ID: " + savedUser.getId());
+        // Return a 201 Created status along with the saved user data (including the generated UUID)
+        return ResponseEntity.status(201).body(savedUser);
+    }
+
+    // --- EXISTING: The GET mapping to find a user ---
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(
         @PathVariable UUID id,
@@ -28,7 +38,7 @@ public class UserController {
         // --- CORRELATION ID END ---
 
         return userRepository.findById(id)
-                .map(user -> ResponseEntity.ok().body(user))
+                .map(foundUser -> ResponseEntity.ok().body(foundUser))
                 .orElse(ResponseEntity.notFound().build()); 
     }
 }
