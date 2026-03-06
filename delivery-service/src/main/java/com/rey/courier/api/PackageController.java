@@ -1,22 +1,42 @@
 package com.rey.courier.api;
 
+import com.rey.courier.application.PackageOrchestrator;
 import com.rey.courier.application.PackageService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID; 
 
 @RestController
-@RequestMapping("/api/v1/packages") // This matches Postman exactly
+@RequestMapping("/api/v1/packages")
 public class PackageController {
 
+    private final PackageOrchestrator packageOrchestrator;
     private final PackageService packageService;
 
-    public PackageController(PackageService packageService) {
+    // Inject BOTH the Orchestrator and the Service
+    public PackageController(PackageOrchestrator packageOrchestrator, PackageService packageService) {
+        this.packageOrchestrator = packageOrchestrator;
         this.packageService = packageService;
     }
 
-    @PostMapping // This makes it handle POST requests
+    @PostMapping 
     public PackageResponse createPackage(@RequestBody PackageRequest request) {
-        return packageService.registerNewPackage(request);
+        // --- MODULE 5 CHANGE ---
+        // Hand off the complex workflow to the Orchestrator!
+        return packageOrchestrator.orchestrateNewPackage(request);
+    }
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<String> getPackageStatus(@PathVariable UUID id) {
+        String status = packageService.checkPackageFinalStatus(id);
+        return ResponseEntity.ok(status);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<String> cancelPackage(@PathVariable UUID id) {
+        String status = packageService.cancelPackage(id);
+        return ResponseEntity.ok(status);
     }
 
     @GetMapping
