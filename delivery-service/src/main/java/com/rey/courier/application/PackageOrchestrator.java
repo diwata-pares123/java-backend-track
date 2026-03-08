@@ -20,19 +20,22 @@ public class PackageOrchestrator {
         this.restTemplate = restTemplate;
     }
 
-    public PackageResponse orchestrateNewPackage(PackageRequest request) {
-        System.out.println("[Orchestrator] Starting workflow for new package...");
+    // --- NEW: Added userToken to the method signature ---
+public PackageResponse orchestrateNewPackage(PackageRequest request, String userToken) {        System.out.println("[Orchestrator] Starting workflow for new package...");
 
         String correlationId = UUID.randomUUID().toString();
         
-        // 1. Call Identity (Network)
-        String url = "http://localhost:8080/api/v1/users/" + request.getSenderId();
+        String url = "http://localhost:8080/api/v1/internal/users/" + request.getSenderId();
         
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Correlation-ID", correlationId);
-        
-        // --- NEW: Injecting the Secret Key ---
         headers.set("X-Internal-Service-Key", "super-secret-delivery-key-2026"); 
+
+        // --- NEW: Propagate the user's token! ---
+        if (userToken != null) {
+            headers.set("Authorization", userToken);
+            System.out.println("[Orchestrator] Propagating user token downstream...");
+        }
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -50,10 +53,8 @@ public class PackageOrchestrator {
             throw new RuntimeException("Identity Service unavailable.");
         }
 
-        // 2. Call Delivery (Local DB)
         PackageResponse savedResponse = packageService.saveInitialPackage(request, sender.getId());
 
-        // 3. Call Operations (Network Simulation)
         try {
              System.out.println("[Orchestrator] Operations check passed!");
         } catch (Exception e) {

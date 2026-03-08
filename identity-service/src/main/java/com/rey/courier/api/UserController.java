@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserRepository userRepository; 
@@ -17,30 +16,40 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-    @PostMapping
+    @GetMapping("/api/v1/public/status")
+    public String getStatus() {
+        return "Identity Service is UP (Public)";
+    }
+
+    @PostMapping("/api/v1/internal/users")
     public ResponseEntity<User> createUser(@RequestBody User user) {
         User savedUser = userRepository.save(user);
-        System.out.println("[Identity Service] Successfully created new user with ID: " + savedUser.getId());
+        System.out.println("[Identity Service] Successfully created internal user with ID: " + savedUser.getId());
         return ResponseEntity.status(201).body(savedUser);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(
+    @GetMapping("/api/v1/internal/users/{id}")
+    public ResponseEntity<User> getInternalUser(
         @PathVariable UUID id,
         @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId,
-        // --- SECURITY ALARM NEW --- Demand the secret key!
-        @RequestHeader(value = "X-Internal-Service-Key", required = false) String serviceKey) {
+        @RequestHeader(value = "X-Internal-Service-Key", required = false) String serviceKey,
+        // --- NEW: Read the propagated token! ---
+        @RequestHeader(value = "Authorization", required = false) String userToken) {
         
-        // 1. Check the VIP Pass
         String EXPECTED_SECRET = "super-secret-delivery-key-2026";
         
         if (serviceKey == null || !serviceKey.equals(EXPECTED_SECRET)) {
             System.out.println("[SECURITY ALARM] Unauthorized access attempt blocked!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 Error
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); 
         }
 
-        System.out.println("[Identity Service] Processing request for User ID: " + id + 
+        System.out.println("[Identity Service] Processing Internal request for User ID: " + id + 
                            " | Correlation ID: " + correlationId);
+                           
+        // --- NEW: Log the token to prove it arrived! ---
+        if (userToken != null) {
+            System.out.println("[Identity Service] Propagated User Token: " + userToken);
+        }
 
         return userRepository.findById(id)
                 .map(foundUser -> ResponseEntity.ok().body(foundUser))
