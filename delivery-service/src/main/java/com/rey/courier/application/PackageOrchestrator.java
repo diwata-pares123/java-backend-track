@@ -14,24 +14,25 @@ public class PackageOrchestrator {
     
     private final PackageService packageService;
     private final RestTemplate restTemplate;
+    private final NotificationService notificationService; // Added
 
-    public PackageOrchestrator(PackageService packageService, RestTemplate restTemplate) {
+    // Updated Constructor
+    public PackageOrchestrator(PackageService packageService, RestTemplate restTemplate, NotificationService notificationService) {
         this.packageService = packageService;
         this.restTemplate = restTemplate;
+        this.notificationService = notificationService; // Added
     }
 
-    // --- NEW: Added userToken to the method signature ---
-public PackageResponse orchestrateNewPackage(PackageRequest request, String userToken) {        System.out.println("[Orchestrator] Starting workflow for new package...");
+    public PackageResponse orchestrateNewPackage(PackageRequest request, String userToken) {
+        System.out.println("[Orchestrator] Starting workflow for new package...");
 
         String correlationId = UUID.randomUUID().toString();
-        
         String url = "http://localhost:8080/api/v1/internal/users/" + request.getSenderId();
         
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Correlation-ID", correlationId);
         headers.set("X-Internal-Service-Key", "super-secret-delivery-key-2026"); 
 
-        // --- NEW: Propagate the user's token! ---
         if (userToken != null) {
             headers.set("Authorization", userToken);
             System.out.println("[Orchestrator] Propagating user token downstream...");
@@ -54,6 +55,11 @@ public PackageResponse orchestrateNewPackage(PackageRequest request, String user
         }
 
         PackageResponse savedResponse = packageService.saveInitialPackage(request, sender.getId());
+
+        // --- NEW: Trigger the ASYNC Notification ---
+        // We use the ID or Tracking Number from the savedResponse.
+        // The orchestrator will NOT wait 5 seconds for this to finish!
+        notificationService.sendDriverDispatchSms("Package ID: " + savedResponse.getId());
 
         try {
              System.out.println("[Orchestrator] Operations check passed!");
