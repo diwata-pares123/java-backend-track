@@ -3,16 +3,17 @@ package com.rey.courier.config;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.AsyncConfigurer; // NEW
+import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.retry.annotation.EnableRetry; // --- NEW ---
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
-public class AsyncConfig implements AsyncConfigurer { // IMPLEMENTS ADDED
+@EnableRetry // --- NEW: Tells Spring to activate the self-healing retry logic ---
+public class AsyncConfig implements AsyncConfigurer { 
 
-    // This is your custom thread pool from the previous activity
     @Bean(name = "smsTaskExecutor")
     public Executor smsTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -24,7 +25,6 @@ public class AsyncConfig implements AsyncConfigurer { // IMPLEMENTS ADDED
         return executor;
     }
 
-    // --- NEW: Register your safety net! ---
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new CustomAsyncExceptionHandler();

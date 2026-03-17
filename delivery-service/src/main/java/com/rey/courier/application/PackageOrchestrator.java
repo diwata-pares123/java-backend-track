@@ -3,6 +3,8 @@ package com.rey.courier.application;
 import com.rey.courier.api.PackageRequest;
 import com.rey.courier.api.PackageResponse;
 import com.rey.courier.domain.User;
+import com.rey.courier.event.PackageCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
@@ -14,13 +16,14 @@ public class PackageOrchestrator {
     
     private final PackageService packageService;
     private final RestTemplate restTemplate;
-    private final NotificationService notificationService; // Added
+    // --- NEW: The Town Crier's megaphone ---
+    private final ApplicationEventPublisher eventPublisher; 
 
     // Updated Constructor
-    public PackageOrchestrator(PackageService packageService, RestTemplate restTemplate, NotificationService notificationService) {
+    public PackageOrchestrator(PackageService packageService, RestTemplate restTemplate, ApplicationEventPublisher eventPublisher) {
         this.packageService = packageService;
         this.restTemplate = restTemplate;
-        this.notificationService = notificationService; // Added
+        this.eventPublisher = eventPublisher; 
     }
 
     public PackageResponse orchestrateNewPackage(PackageRequest request, String userToken) {
@@ -56,10 +59,10 @@ public class PackageOrchestrator {
 
         PackageResponse savedResponse = packageService.saveInitialPackage(request, sender.getId());
 
-        // --- NEW: Trigger the ASYNC Notification ---
-        // We use the ID or Tracking Number from the savedResponse.
-        // The orchestrator will NOT wait 5 seconds for this to finish!
-        notificationService.sendDriverDispatchSms("Package ID: " + savedResponse.getId());
+        // --- NEW: We no longer tell the NotificationService what to do. We just announce a fact! ---
+        PackageCreatedEvent event = new PackageCreatedEvent(savedResponse.getId().toString());
+        System.out.println("[Orchestrator] Broadcasting " + event.getClass().getSimpleName() + " for Package: " + event.getPackageId());
+        eventPublisher.publishEvent(event);
 
         try {
              System.out.println("[Orchestrator] Operations check passed!");
