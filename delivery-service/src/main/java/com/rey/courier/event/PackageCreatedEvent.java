@@ -2,10 +2,12 @@ package com.rey.courier.event;
 
 import java.time.LocalDateTime;
 
-// This is the "Message" we will broadcast to the system.
 public class PackageCreatedEvent {
-    private final String packageId;
-    private final LocalDateTime timestamp;
+    private String packageId;
+    private LocalDateTime timestamp;
+
+    // IMPORTANT: Jackson needs this empty constructor to read the JSON from RabbitMQ!
+    public PackageCreatedEvent() {}
 
     public PackageCreatedEvent(String packageId) {
         this.packageId = packageId;
@@ -13,5 +15,8 @@ public class PackageCreatedEvent {
     }
 
     public String getPackageId() { return packageId; }
+    public void setPackageId(String packageId) { this.packageId = packageId; }
+    
     public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

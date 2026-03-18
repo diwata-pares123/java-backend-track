@@ -2,6 +2,9 @@ package com.rey.courier.api;
 
 import com.rey.courier.application.PackageOrchestrator;
 import com.rey.courier.application.PackageService;
+import com.rey.courier.config.RabbitConfig;
+import com.rey.courier.event.PackageCreatedEvent;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,36 +20,45 @@ public class PackageController {
 
     private final PackageOrchestrator packageOrchestrator;
     private final PackageService packageService;
+    
+    // --- NEW: The RabbitMQ Publisher ---
+    private final RabbitTemplate rabbitTemplate;
 
-    // --- NEW: A memory store to remember requests we've already processed ---
     private final Set<String> processedKeys = new HashSet<>();
 
-    public PackageController(PackageOrchestrator packageOrchestrator, PackageService packageService) {
+    // Inject RabbitTemplate into the constructor
+    public PackageController(PackageOrchestrator packageOrchestrator, PackageService packageService, RabbitTemplate rabbitTemplate) {
         this.packageOrchestrator = packageOrchestrator;
         this.packageService = packageService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @PostMapping 
     public ResponseEntity<Object> createPackage(
             @RequestBody PackageRequest request,
             @RequestHeader(value = "Authorization", required = false) String userToken,
-            // --- NEW: Require the client to send a unique tracking key ---
             @RequestHeader(value = "Idempotency-Key", required = true) String idempotencyKey) {
 
-        // 1. CHECK IDEMPOTENCY: Have we seen this exact request before?
+        // 1. CHECK IDEMPOTENCY
         if (processedKeys.contains(idempotencyKey)) {
             System.out.println("♻️ [Idempotency Guard] Duplicate request detected for key: " + idempotencyKey + ". Returning safe success response.");
-            // Return a 200 OK (not 201 Created) because we didn't actually create a new one this time.
             return ResponseEntity.ok("Package already created (Idempotent Cache Hit)");
         }
 
-        // 2. NORMAL PROCESSING (Only happens the first time)
+        // 2. NORMAL PROCESSING 
         PackageResponse response = packageOrchestrator.orchestrateNewPackage(request, userToken);
 
-        // 3. SAVE THE KEY: Remember that we successfully processed this request
+        // 3. SAVE THE KEY
         processedKeys.add(idempotencyKey);
 
-        // Return 201 Created on the first successful run
+        // --- NEW: BROADCAST TO RABBITMQ ---
+        // We use a random UUID here to simulate the tracking ID being broadcasted
+        String mockPackageId = UUID.randomUUID().toString();
+        PackageCreatedEvent event = new PackageCreatedEvent(mockPackageId);
+        
+        System.out.println("📻 [Main-Web-Thread] Broadcasting Event to RabbitMQ Exchange...");
+        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE_NAME, "", event);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -56,7 +68,6 @@ public class PackageController {
         return ResponseEntity.ok(status);
     }
 
-    // --- PREVIOUS TICKET: ZERO-TRUST DATA OWNERSHIP CHECK ---
     @PostMapping("/{id}/cancel")
     public ResponseEntity<String> cancelPackage(
             @PathVariable UUID id,
@@ -75,7 +86,6 @@ public class PackageController {
         return ResponseEntity.ok(status);
     }
 
-    // --- PREVIOUS TICKET: THE VIP ROOM (Kept safe!) ---
     @DeleteMapping("/{id}/force-cancel")
     public ResponseEntity<String> forceCancelPackage(
             @PathVariable UUID id, 

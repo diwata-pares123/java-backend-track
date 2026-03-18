@@ -1,16 +1,16 @@
 package com.rey.courier.application;
 
 import com.rey.courier.event.PackageCreatedEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+// import org.springframework.context.event.EventListener;
+// import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 public class NotificationService {
 
-    // --- NEW: This method triggers automatically whenever a PackageCreatedEvent is shouted! ---
-    @Async("smsTaskExecutor") 
-    @EventListener
+    // --- DISABLED: We are using RabbitMQ (@RabbitListener) now! ---
+    // @Async("smsTaskExecutor") 
+    // @EventListener
     public void handlePackageCreatedEvent(PackageCreatedEvent event) {
         
         System.out.println("🎧 [" + Thread.currentThread().getName() + "] Listener heard an event! Package ID: " + event.getPackageId());
