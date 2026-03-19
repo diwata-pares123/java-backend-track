@@ -5,11 +5,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.scheduling.annotation.EnableAsync; // Added
+import org.springframework.scheduling.annotation.EnableAsync;
 import java.time.Duration;
 
 @SpringBootApplication
-@EnableAsync // --- NEW: Tells Spring to look for @Async tasks! ---
+@EnableAsync
 public class Main {
     
     public static void main(String[] args) {
