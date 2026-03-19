@@ -3,7 +3,7 @@ package com.rey.courier.api;
 import com.rey.courier.application.PackageOrchestrator;
 import com.rey.courier.application.PackageService;
 import com.rey.courier.config.RabbitConfig;
-import com.rey.courier.event.PackageCreatedEvent;
+import com.rey.courier.event.PackageCreatedEventV2; // IMPORT V2 EVENT
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +20,10 @@ public class PackageController {
 
     private final PackageOrchestrator packageOrchestrator;
     private final PackageService packageService;
-    
-    // --- NEW: The RabbitMQ Publisher ---
     private final RabbitTemplate rabbitTemplate;
 
     private final Set<String> processedKeys = new HashSet<>();
 
-    // Inject RabbitTemplate into the constructor
     public PackageController(PackageOrchestrator packageOrchestrator, PackageService packageService, RabbitTemplate rabbitTemplate) {
         this.packageOrchestrator = packageOrchestrator;
         this.packageService = packageService;
@@ -41,7 +38,7 @@ public class PackageController {
 
         // 1. CHECK IDEMPOTENCY
         if (processedKeys.contains(idempotencyKey)) {
-            System.out.println("♻️ [Idempotency Guard] Duplicate request detected for key: " + idempotencyKey + ". Returning safe success response.");
+            System.out.println("♻️ [Idempotency Guard] Duplicate request detected for key: " + idempotencyKey);
             return ResponseEntity.ok("Package already created (Idempotent Cache Hit)");
         }
 
@@ -51,13 +48,13 @@ public class PackageController {
         // 3. SAVE THE KEY
         processedKeys.add(idempotencyKey);
 
-        // --- NEW: BROADCAST TO RABBITMQ ---
-        // We use a random UUID here to simulate the tracking ID being broadcasted
-        String mockPackageId = UUID.randomUUID().toString();
-        PackageCreatedEvent event = new PackageCreatedEvent(mockPackageId);
+        // --- UPDATED: BROADCAST V2 EVENT TO RABBITMQ ---
+        // We generate a mock tracking number and pull the address from the request
+        String mockTracking = "TRK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        PackageCreatedEventV2 v2Event = new PackageCreatedEventV2(mockTracking, request.getDestinationAddress());
         
-        System.out.println("📻 [Main-Web-Thread] Broadcasting Event to RabbitMQ Exchange...");
-        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE_NAME, "", event);
+        System.out.println("📻 [Main-Web-Thread] Broadcasting V2 Event to RabbitMQ Exchange...");
+        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE_NAME, "", v2Event);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -77,9 +74,8 @@ public class PackageController {
         System.out.println("[Zero-Trust Policy] Verifying data ownership for Package: " + id);
 
         if (!requestUserId.equals(packageOwnerId)) {
-            System.out.println("[SECURITY ALARM] User " + requestUserId + " attempted to modify a package they do not own!");
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Zero-Trust Violation: You do not have permission to modify this specific package.");
+                    .body("Zero-Trust Violation: Access Denied.");
         }
 
         String status = packageService.cancelPackage(id);
@@ -91,10 +87,7 @@ public class PackageController {
             @PathVariable UUID id, 
             @RequestHeader(value = "X-User-Role", required = true) String userRole) {
         
-        System.out.println("[Delivery Service] Force Cancel requested by role: " + userRole);
-
         if (!"ADMIN".equals(userRole.toUpperCase())) {
-            System.out.println("[SECURITY ALARM] Non-admin attempted to force cancel!");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied: Admins Only");
         }
 
