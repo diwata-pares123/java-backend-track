@@ -1,5 +1,6 @@
 com\rey\courier\domain\DeliveryPackage.class
 com\rey\courier\domain\repository\UserRepository.class
+com\rey\courier\api\UserController.class
 com\rey\courier\domain\User.class
 com\rey\courier\Main.class
 com\rey\courier\api\validation\TrackingPrefixValidator.class
