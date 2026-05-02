@@ -13,3 +13,6 @@
 # System junk
 .DS_Store
 Thumbs.db
+
+# Ignore environment variables
+.env

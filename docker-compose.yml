@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # 1. The Local Database Container
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: courier-postgres
+    environment:
+      POSTGRES_USER: local_user
+      POSTGRES_PASSWORD: local_password
+      POSTGRES_DB: courier_db
+    ports:
+      - "5432:5432"
+
+  # 2. Identity Service Container
+  identity-service:
+    build: ./identity-service
+    container_name: courier-identity
+    ports:
+      - "8080:8080"
+    environment:
+      # This overrides the Supabase URL in your application.properties
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/courier_db
+      # This fills in the ${DB_USERNAME} variable in your application.properties
+      DB_USERNAME: local_user
+      # This fills in the ${DB_PASSWORD} variable in your application.properties
+      DB_PASSWORD: local_password
+      # This prevents schema errors on the fresh local DB
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: public
+    depends_on:
+      - postgres-db
+
+  # 3. Delivery Service Container
+  delivery-service:
+    build: ./delivery-service
+    container_name: courier-delivery
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/courier_db
+      DB_USERNAME: local_user
+      DB_PASSWORD: local_password
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: public
+    depends_on:
+      - postgres-db
+
+  # 4. Operations Service Container
+  operations-service:
+    build: ./operations-service
+    container_name: courier-operations
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/courier_db
+      DB_USERNAME: local_user
+      DB_PASSWORD: local_password
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: public
+    depends_on:
+      - postgres-db
