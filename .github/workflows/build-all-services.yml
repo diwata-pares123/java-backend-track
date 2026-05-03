@@ -1,0 +1,40 @@
+name: Microservices Build Pipeline
+
+# 1. When should this pipeline run? 
+on:
+  push:
+    branches: [ "master", "main" ]
+
+# 2. What should it do?
+jobs:
+  build-all:
+    # Run this on a fresh, temporary Ubuntu Linux machine
+    runs-on: ubuntu-latest 
+
+    steps:
+      # Step A: Download your code from the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step B: Install Java 17 on the Ubuntu machine
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin' 
+          cache: maven 
+
+      # Step C: Build Identity Service
+      - name: Build Identity Service
+        working-directory: ./identity-service
+        run: mvn clean package -DskipTests
+
+      # Step D: Build Delivery Service
+      - name: Build Delivery Service
+        working-directory: ./delivery-service
+        run: mvn clean package -DskipTests
+
+      # Step E: Build Operations Service
+      - name: Build Operations Service
+        working-directory: ./operations-service
+        run: mvn clean package -DskipTests
