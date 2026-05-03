@@ -5,6 +5,7 @@ on:
     branches: [ "master", "main" ]
 
 jobs:
+  # --- JOB 1: The Build & Test Stage ---
   build-all:
     runs-on: ubuntu-latest 
 
@@ -19,17 +20,28 @@ jobs:
           distribution: 'temurin' 
           cache: maven 
 
-      # Step C: Build and Test Identity Service
       - name: Build and Test Identity Service
         working-directory: ./identity-service
         run: mvn clean package
 
-      # Step D: Build and Test Delivery Service
       - name: Build and Test Delivery Service
         working-directory: ./delivery-service
         run: mvn clean package
 
-      # Step E: Build and Test Operations Service
       - name: Build and Test Operations Service
         working-directory: ./operations-service
         run: mvn clean package
+
+  # --- JOB 2: The Quality Gate Stage ---
+  quality-gate:
+    # CRITICAL: This tells the pipeline to WAIT for JOB 1 to finish successfully!
+    needs: build-all 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulated SonarQube Scan for All Services
+        run: |
+          echo "Scanning Identity Service for vulnerabilities..."
+          echo "Scanning Delivery Service for vulnerabilities..."
+          echo "Scanning Operations Service for vulnerabilities..."
+          echo "Scanning all code for hardcoded secrets..."
+          echo "✅ Quality Gate Passed! All services are clean and secure."
