@@ -20,21 +20,44 @@ jobs:
           distribution: 'temurin' 
           cache: maven 
 
+      # --- IDENTITY SERVICE ---
       - name: Build and Test Identity Service
         working-directory: ./identity-service
         run: mvn clean package
 
+      - name: Build and Version Identity Docker Image
+        working-directory: ./identity-service
+        run: |
+          echo "Building Identity Docker image with tag: ${{ github.sha }}"
+          docker build -t identity-service:${{ github.sha }} .
+          docker images
+
+      # --- DELIVERY SERVICE ---
       - name: Build and Test Delivery Service
         working-directory: ./delivery-service
         run: mvn clean package
 
+      - name: Build and Version Delivery Docker Image
+        working-directory: ./delivery-service
+        run: |
+          echo "Building Delivery Docker image with tag: ${{ github.sha }}"
+          docker build -t delivery-service:${{ github.sha }} .
+          docker images
+
+      # --- OPERATIONS SERVICE ---
       - name: Build and Test Operations Service
         working-directory: ./operations-service
         run: mvn clean package
 
+      - name: Build and Version Operations Docker Image
+        working-directory: ./operations-service
+        run: |
+          echo "Building Operations Docker image with tag: ${{ github.sha }}"
+          docker build -t operations-service:${{ github.sha }} .
+          docker images
+
   # --- JOB 2: The Quality Gate Stage ---
   quality-gate:
-    # CRITICAL: This tells the pipeline to WAIT for JOB 1 to finish successfully!
     needs: build-all 
     runs-on: ubuntu-latest
     steps:
