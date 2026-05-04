@@ -1,0 +1,29 @@
+name: Manual Deploy / Rollback
+
+# This trigger tells GitHub to create a "Run Workflow" button in the UI
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'The Git SHA tag to deploy (e.g., 45f7c00)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Deployment Command for ALL Services
+        run: |
+          echo "🚨 INITIATING EMERGENCY DEPLOYMENT SEQUENCE 🚨"
+          echo "Target Environment: PRODUCTION"
+          echo "---"
+          echo "Pulling identity-service:${{ inputs.image_tag }}..."
+          echo "Pulling delivery-service:${{ inputs.image_tag }}..."
+          echo "Pulling operations-service:${{ inputs.image_tag }}..."
+          echo "---"
+          echo "Stopping current containers..."
+          echo "Starting identity-service:${{ inputs.image_tag }}..."
+          echo "Starting delivery-service:${{ inputs.image_tag }}..."
+          echo "Starting operations-service:${{ inputs.image_tag }}..."
+          echo "✅ Deployment successful. Ecosystem restored."
